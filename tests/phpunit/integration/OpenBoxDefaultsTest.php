@@ -16,6 +16,10 @@ class OpenBoxDefaultsTest extends ApiTestCase {
 		$this->assertTrue( $config->get( 'PageLikeEnableWrites' ) );
 		$this->assertTrue( $config->get( 'PageLikeShowDefaultButton' ) );
 		$this->assertFalse( $config->get( 'PageLikeEnableRanking' ) );
+
+		$defaultOptions = $config->get( 'DefaultUserOptions' );
+		$this->assertTrue( $defaultOptions['echo-subscriptions-web-page-like'] );
+		$this->assertFalse( $defaultOptions['echo-subscriptions-email-page-like'] );
 	}
 
 	public function testNamedUserCanLikeByDefaultButAnonymousHasNoRight(): void {

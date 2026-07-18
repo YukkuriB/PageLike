@@ -30,7 +30,7 @@ class LikeStoreTest extends MediaWikiIntegrationTestCase {
 		parent::tearDown();
 	}
 
-	public function testExplicitStateIsIdempotentAndRelikeGetsNewTime(): void {
+	public function testExplicitStateIsIdempotentAndReportsOnlyNewLikes(): void {
 		$page = $this->getExistingTestPage( 'PageLike store idempotency' );
 		$user = $this->getTestUser()->getUserIdentity();
 		$pageId = $page->getId();
@@ -39,29 +39,32 @@ class LikeStoreTest extends MediaWikiIntegrationTestCase {
 		$this->store->setState( $pageId, $userId, false );
 		ConvertibleTimestamp::setFakeTime( '20260101000000' );
 		$this->assertSame(
-			[ 'liked' => true, 'count' => 1 ],
+			[ 'liked' => true, 'count' => 1, 'newlyLiked' => true ],
 			$this->store->setState( $pageId, $userId, true )
 		);
 		$firstTimestamp = $this->getLikedTimestamp( $pageId, $userId );
 
 		ConvertibleTimestamp::setFakeTime( '20260102000000' );
 		$this->assertSame(
-			[ 'liked' => true, 'count' => 1 ],
+			[ 'liked' => true, 'count' => 1, 'newlyLiked' => false ],
 			$this->store->setState( $pageId, $userId, true )
 		);
 		$this->assertSame( $firstTimestamp, $this->getLikedTimestamp( $pageId, $userId ) );
 
 		$this->assertSame(
-			[ 'liked' => false, 'count' => 0 ],
+			[ 'liked' => false, 'count' => 0, 'newlyLiked' => false ],
 			$this->store->setState( $pageId, $userId, false )
 		);
 		$this->assertSame(
-			[ 'liked' => false, 'count' => 0 ],
+			[ 'liked' => false, 'count' => 0, 'newlyLiked' => false ],
 			$this->store->setState( $pageId, $userId, false )
 		);
 
 		ConvertibleTimestamp::setFakeTime( '20260103000000' );
-		$this->store->setState( $pageId, $userId, true );
+		$this->assertSame(
+			[ 'liked' => true, 'count' => 1, 'newlyLiked' => true ],
+			$this->store->setState( $pageId, $userId, true )
+		);
 		$this->assertSame( '20260103000000', $this->getLikedTimestamp( $pageId, $userId ) );
 	}
 

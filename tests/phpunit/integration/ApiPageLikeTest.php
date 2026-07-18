@@ -4,6 +4,11 @@ namespace MediaWiki\Extension\PageLike\Tests\Integration;
 
 use MediaWiki\Api\ApiMain;
 use MediaWiki\Api\ApiQueryTokens;
+use MediaWiki\Deferred\DeferredUpdates;
+use MediaWiki\Extension\Notifications\Formatters\EchoEventPresentationModel;
+use MediaWiki\Extension\Notifications\Model\Event;
+use MediaWiki\Extension\PageLike\PageLikePresentationModel;
+use MediaWiki\Registration\ExtensionRegistry;
 use MediaWiki\Request\FauxRequest;
 use MediaWiki\Session\SessionManager;
 use MediaWiki\Tests\Api\ApiTestCase;
@@ -55,6 +60,221 @@ class ApiPageLikeTest extends ApiTestCase {
 			'count' => 1,
 			'canlike' => true,
 		], $info['query']['pages'][$page->getId()]['pagelikeinfo'] );
+	}
+
+	public function testOnlyNewLikesNotifyTheNamedPageCreator(): void {
+		$this->requireEcho();
+		$this->overrideConfigValue( 'EchoUseJobQueue', false );
+		$creator = $this->getTestUser( [ 'pagelike-notification-creator' ] )->getUser();
+		$liker = $this->getTestUser( [ 'pagelike-notification-liker' ] )->getUser();
+		$this->assertStatusGood( $this->editPage(
+			'PageLike creator notification',
+			'Notification test page',
+			'',
+			NS_MAIN,
+			$creator
+		) );
+		$page = $this->getExistingTestPage( 'PageLike creator notification' );
+
+		[ $firstLike ] = $this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $page->getId(),
+			'set' => 1,
+			'formatversion' => 2,
+		], null, $liker, 'csrf' );
+		$this->assertTrue( $firstLike['pagelike']['liked'] );
+		$this->assertSame( 0, $this->countPageLikeEvents( $page->getId() ) );
+		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
+		$this->assertSame( 1, $this->countPageLikeEvents( $page->getId() ) );
+		$this->assertSame(
+			[ $creator->getId() ],
+			$this->getPageLikeNotificationRecipients( $page->getId() )
+		);
+
+		$eventId = (int)$this->getDb()->newSelectQueryBuilder()
+			->select( 'event_id' )
+			->from( 'echo_event' )
+			->where( [
+				'event_type' => 'page-like',
+				'event_page_id' => $page->getId(),
+			] )
+			->caller( __METHOD__ )
+			->fetchField();
+		$model = EchoEventPresentationModel::factory(
+			Event::newFromId( $eventId ),
+			$this->getServiceContainer()->getLanguageFactory()->getLanguage( 'en' ),
+			$creator
+		);
+		$this->assertInstanceOf( PageLikePresentationModel::class, $model );
+		$this->assertTrue( $model->canRender() );
+		$this->assertSame( 'site', $model->getIconType() );
+		$this->assertStringContainsString(
+			$page->getTitle()->getText(),
+			$model->getHeaderMessage()->text()
+		);
+
+		// An idempotent set=1 and an unlike do not create events.
+		$this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $page->getId(),
+			'set' => 1,
+		], null, $liker );
+		$this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $page->getId(),
+			'set' => 0,
+		], null, $liker );
+		$this->assertSame( 1, $this->countPageLikeEvents( $page->getId() ) );
+
+		// A later false-to-true transition is a new like and does notify again.
+		$this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $page->getId(),
+			'set' => 1,
+		], null, $liker );
+		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
+		$this->assertSame( 2, $this->countPageLikeEvents( $page->getId() ) );
+	}
+
+	public function testCreatorNotificationExcludesTheAgentAndAnonymousCreators(): void {
+		$this->requireEcho();
+		$this->overrideConfigValue( 'EchoUseJobQueue', false );
+		$liker = $this->getTestUser( [ 'pagelike-self-creator' ] )->getUser();
+		$this->assertStatusGood( $this->editPage(
+			'PageLike self creator notification',
+			'Self-created page',
+			'',
+			NS_MAIN,
+			$liker
+		) );
+		$selfCreated = $this->getExistingTestPage( 'PageLike self creator notification' );
+		$this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $selfCreated->getId(),
+			'set' => 1,
+		], null, $liker );
+		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
+		$this->assertSame( 0, $this->countPageLikeEvents( $selfCreated->getId() ) );
+
+		$anonymous = $this->getServiceContainer()->getUserFactory()->newAnonymous( '192.0.2.55' );
+		$this->assertStatusGood( $this->editPage(
+			'PageLike anonymous creator notification',
+			'Anonymously created page',
+			'',
+			NS_MAIN,
+			$anonymous
+		) );
+		$anonymousCreated = $this->getExistingTestPage( 'PageLike anonymous creator notification' );
+		$this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $anonymousCreated->getId(),
+			'set' => 1,
+		], null, $liker );
+		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
+		$this->assertSame( 0, $this->countPageLikeEvents( $anonymousCreated->getId() ) );
+	}
+
+	public function testNotificationFailureDoesNotTurnTheLikeIntoAnApiFailure(): void {
+		$this->requireEcho();
+		$this->overrideConfigValue( 'EchoUseJobQueue', false );
+		$creator = $this->getTestUser( [ 'pagelike-failing-notification-creator' ] )->getUser();
+		$liker = $this->getTestUser( [ 'pagelike-failing-notification-liker' ] )->getUser();
+		$this->assertStatusGood( $this->editPage(
+			'PageLike failing creator notification',
+			'Notification failure test page',
+			'',
+			NS_MAIN,
+			$creator
+		) );
+		$page = $this->getExistingTestPage( 'PageLike failing creator notification' );
+		$this->setTemporaryHook( 'BeforeEchoEventInsert', static function (): bool {
+			throw new \RuntimeException( 'Expected PageLike notification test failure' );
+		} );
+
+		[ $result ] = $this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $page->getId(),
+			'set' => 1,
+			'formatversion' => 2,
+		], null, $liker, 'csrf' );
+
+		$this->assertSame( [
+			'pageid' => $page->getId(),
+			'enabled' => true,
+			'liked' => true,
+			'count' => 1,
+		], $result['pagelike'] );
+		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
+	}
+
+	public function testCreatorWhoCanNoLongerReadThePageIsNotNotified(): void {
+		$this->requireEcho();
+		$this->overrideConfigValue( 'EchoUseJobQueue', false );
+		$creator = $this->getTestUser( [ 'pagelike-no-read-creator' ] )->getUser();
+		$liker = $this->getTestUser( [ 'pagelike-no-read-liker' ] )->getUser();
+		$this->assertStatusGood( $this->editPage(
+			'PageLike unreadable creator notification',
+			'Read permission test page',
+			'',
+			NS_MAIN,
+			$creator
+		) );
+		$page = $this->getExistingTestPage( 'PageLike unreadable creator notification' );
+
+		$this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $page->getId(),
+			'set' => 1,
+		], null, $liker );
+		$this->setTemporaryHook(
+			'getUserPermissionsErrors',
+			static function ( $title, &$user, $action, &$result ) use ( $creator, $page ) {
+				if ( $action === 'read'
+					&& $user->getId() === $creator->getId()
+					&& $title->getArticleID() === $page->getId()
+				) {
+					$result = false;
+					return false;
+				}
+			}
+		);
+
+		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
+		$this->assertSame( 0, $this->countPageLikeEvents( $page->getId() ) );
+	}
+
+	public function testRolledBackLikeCancelsCreatorNotification(): void {
+		$this->requireEcho();
+		$this->overrideConfigValue( 'EchoUseJobQueue', false );
+		$creator = $this->getTestUser( [ 'pagelike-rollback-creator' ] )->getUser();
+		$liker = $this->getTestUser( [ 'pagelike-rollback-liker' ] )->getUser();
+		$this->assertStatusGood( $this->editPage(
+			'PageLike rolled back creator notification',
+			'Rollback test page',
+			'',
+			NS_MAIN,
+			$creator
+		) );
+		$page = $this->getExistingTestPage( 'PageLike rolled back creator notification' );
+		$dbw = $this->getServiceContainer()->getConnectionProvider()->getPrimaryDatabase();
+		$dbw->startAtomic( __METHOD__, $dbw::ATOMIC_CANCELABLE );
+
+		[ $result ] = $this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $page->getId(),
+			'set' => 1,
+			'formatversion' => 2,
+		], null, $liker, 'csrf' );
+		$this->assertTrue( $result['pagelike']['liked'] );
+		$dbw->cancelAtomic( __METHOD__ );
+
+		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
+		$this->assertSame( 0, $this->countPageLikeEvents( $page->getId() ) );
+		$this->assertSame(
+			[ 'liked' => false, 'count' => 0 ],
+			$this->getServiceContainer()->get( 'PageLike.LikeStore' )
+				->getStates( [ $page->getId() ], $liker->getId(), true )[$page->getId()]
+		);
 	}
 
 	public function testDisabledSwitchHidesStoredState(): void {
@@ -261,6 +481,39 @@ class ApiPageLikeTest extends ApiTestCase {
 			'pageid' => $page->getId(),
 			'set' => 1,
 		], null, false, $this->getTestSysop()->getUser() );
+	}
+
+	private function requireEcho(): void {
+		if ( !ExtensionRegistry::getInstance()->isLoaded( 'Echo' ) ) {
+			$this->markTestSkipped( 'Echo is optional and is not loaded in this test environment.' );
+		}
+	}
+
+	private function countPageLikeEvents( int $pageId ): int {
+		return (int)$this->getDb()->newSelectQueryBuilder()
+			->select( 'COUNT(*)' )
+			->from( 'echo_event' )
+			->where( [
+				'event_type' => 'page-like',
+				'event_page_id' => $pageId,
+			] )
+			->caller( __METHOD__ )
+			->fetchField();
+	}
+
+	/** @return int[] */
+	private function getPageLikeNotificationRecipients( int $pageId ): array {
+		return array_map( 'intval', $this->getDb()->newSelectQueryBuilder()
+			->select( 'notification_user' )
+			->from( 'echo_notification' )
+			->join( 'echo_event', null, 'notification_event = event_id' )
+			->where( [
+				'event_type' => 'page-like',
+				'event_page_id' => $pageId,
+			] )
+			->orderBy( 'notification_user' )
+			->caller( __METHOD__ )
+			->fetchFieldValues() );
 	}
 
 	public function testWriteRejectsBadToken(): void {

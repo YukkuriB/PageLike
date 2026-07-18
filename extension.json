@@ -1,6 +1,6 @@
 {
 	"name": "PageLike",
-	"version": "0.1.3",
+	"version": "0.2.2",
 	"author": [
 		"RiaWiki contributors"
 	],
@@ -13,6 +13,10 @@
 		"platform": {
 			"php": ">=8.2.0 <8.4.0"
 		}
+	},
+	"DefaultUserOptions": {
+		"echo-subscriptions-web-page-like": true,
+		"echo-subscriptions-email-page-like": false
 	},
 	"AutoloadNamespaces": {
 		"MediaWiki\\Extension\\PageLike\\": "includes/"
@@ -56,7 +60,8 @@
 			"services": [
 				"PageLike.LikeStore",
 				"PageLike.Policy",
-				"PageStore"
+				"PageStore",
+				"PageLike.CreatorNotificationService"
 			]
 		}
 	},
@@ -130,7 +135,6 @@
 				"pagelike-button-like",
 				"pagelike-button-unlike",
 				"pagelike-button-login",
-				"pagelike-status-loading",
 				"pagelike-status-error"
 			]
 		}
@@ -148,6 +152,25 @@
 		"dependencies": [
 			"ext.pageLike"
 		]
+	},
+	"attributes": {
+		"Echo": {
+			"NotificationCategories": {
+				"page-like": {
+					"priority": 5,
+					"title": "echo-category-title-page-like",
+					"tooltip": "echo-pref-tooltip-page-like"
+				}
+			},
+			"Notifications": {
+				"page-like": {
+					"category": "page-like",
+					"group": "positive",
+					"section": "message",
+					"presentation-model": "MediaWiki\\Extension\\PageLike\\PageLikePresentationModel"
+				}
+			}
+		}
 	},
 	"manifest_version": 2
 }

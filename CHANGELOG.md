@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.2
+
+- Use matching SVG outlines for the unliked and liked hearts so the active state retains the same shape.
+- Keep the initial loading state visually stable as only the heart and `0`, without loading text.
+- Disable rankings by default to avoid repeated public aggregation queries on sites without a persistent main cache.
+
+## 0.2.1
+
+- Make Echo optional: PageLike now loads and keeps likes, counts, buttons, and rankings working when Echo is absent.
+- Send creator notifications exactly as before when Echo is installed, while skipping notification work cleanly when it is not.
+
+## 0.2.0
+
+- Notify a page's named creator through Echo when a like is newly added; repeated like requests and unlikes do not notify.
+- Keep creator notifications enabled on web and disabled for email by default, while respecting Echo user preferences.
+- Enable rankings by default.
+- Keep the like count while removing visible text labels from the red-heart button, and enlarge the whole control by 33%.
+
 ## 0.1.3
 
 - Support PHP 8.3 while retaining compatibility with the production PHP 8.2 environment.

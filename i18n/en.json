@@ -10,12 +10,16 @@
 	"pagelike-button-like": "Like",
 	"pagelike-button-unlike": "Unlike",
 	"pagelike-button-login": "Log in to like",
-	"pagelike-status-loading": "Loading likes…",
 	"pagelike-status-error": "The like state could not be updated.",
 	"pagelike-error-disabled": "PageLike is disabled.",
 	"pagelike-error-writes-disabled": "PageLike writes are disabled.",
 	"pagelike-error-ranking-disabled": "PageLike rankings are disabled.",
 	"pagelike-error-disabled-page": "PageLike is not available on this page.",
+	"echo-category-title-page-like": "Page likes",
+	"echo-pref-tooltip-page-like": "Notify me when someone likes a page I created.",
+	"notification-header-page-like": "$1 liked your page “$3”.",
+	"notification-compact-header-page-like": "$1 liked “$3”.",
+	"notification-subject-page-like": "$1 liked a page you created",
 	"apihelp-pagelike-summary": "Set the current named user's like state for a page.",
 	"apihelp-pagelike-param-pageid": "Numeric ID of the target page.",
 	"apihelp-pagelike-param-set": "Explicit state: 1 to like, 0 to unlike.",
@@ -26,4 +30,3 @@
 	"apihelp-query+pagelikerank-param-limit": "Maximum number of results, from 1 to 100.",
 	"apihelp-query+pagelikerank-example-1": "Show the top ten pages from the rolling seven-day period."
 }
-

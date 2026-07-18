@@ -79,7 +79,7 @@ class LikeStore {
 	 * Set an explicit state and return primary-authoritative state and count.
 	 * Null means the page disappeared or became ineligible during the request.
 	 *
-	 * @return array{liked:bool,count:int}|null
+	 * @return array{liked:bool,count:int,newlyLiked:bool}|null
 	 */
 	public function setState( int $pageId, int $userId, bool $liked ): ?array {
 		$dbw = $this->connectionProvider->getPrimaryDatabase();
@@ -104,6 +104,7 @@ class LikeStore {
 					return null;
 				}
 
+				$newlyLiked = false;
 				if ( $liked ) {
 					$dbw->newInsertQueryBuilder()
 						->insertInto( self::TABLE )
@@ -115,6 +116,7 @@ class LikeStore {
 						->ignore()
 						->caller( $method )
 						->execute();
+					$newlyLiked = $dbw->affectedRows() === 1;
 				} else {
 					$dbw->newDeleteQueryBuilder()
 						->deleteFrom( self::TABLE )
@@ -146,6 +148,7 @@ class LikeStore {
 				return [
 					'liked' => $storedPageId !== false,
 					'count' => $count,
+					'newlyLiked' => $newlyLiked && $storedPageId !== false,
 				];
 			}
 		);

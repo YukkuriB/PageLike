@@ -15,6 +15,47 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 		window.matchMedia = originalMatchMedia;
 	} );
 
+	QUnit.test( 'initial pending state shows one heart and zero without loading text', ( assert ) => {
+		const done = assert.async();
+		mw.user.isNamed = () => true;
+		const root = document.createElement( 'div' );
+		root.className = 'ext-pagelike';
+		root.dataset.pageId = '122';
+		document.getElementById( 'qunit-fixture' ).appendChild( root );
+		let resolveRead;
+		const mounted = ui.mount( root, {
+			get: () => new Promise( ( resolve ) => {
+				resolveRead = resolve;
+			} )
+		} );
+		const heart = mounted.elements.icon.querySelector( '.ext-pagelike__heart' );
+		const heartPath = heart.querySelector( '.ext-pagelike__heart-shape' );
+
+		assert.ok( heart, 'the heart SVG is rendered immediately' );
+		assert.ok( heartPath.getAttribute( 'd' ), 'the heart uses one reusable path' );
+		assert.strictEqual( mounted.elements.icon.querySelectorAll( 'path' ).length, 1 );
+		assert.strictEqual( mounted.elements.count.textContent, '0' );
+		assert.strictEqual( mounted.elements.button.textContent, '0' );
+		assert.strictEqual( mounted.elements.status.textContent, '', 'no loading copy is visible' );
+		assert.true( mounted.elements.button.disabled );
+		assert.strictEqual( mounted.elements.button.getAttribute( 'aria-busy' ), 'true' );
+
+		resolveRead( {
+			query: { pages: [ {
+				pageid: 122,
+				pagelikeinfo: { enabled: true, liked: false, count: 3, canlike: true }
+			} ] }
+		} );
+		mounted.ready.then( () => {
+			assert.strictEqual( mounted.elements.icon.querySelector( 'path' ), heartPath );
+			assert.strictEqual( mounted.elements.count.textContent, '3' );
+			assert.strictEqual( mounted.elements.status.textContent, '' );
+			assert.false( mounted.elements.button.disabled );
+			assert.notOk( mounted.elements.button.hasAttribute( 'aria-busy' ) );
+			done();
+		} );
+	} );
+
 	QUnit.test( 'initial state and write keep the button and fire one hook', ( assert ) => {
 		const done = assert.async();
 		mw.user.isNamed = () => true;
@@ -44,6 +85,9 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 		};
 		const mounted = ui.mount( root, api );
 		const button = mounted.elements.button;
+		const heart = mounted.elements.icon.querySelector( '.ext-pagelike__heart' );
+		const heartPath = heart.querySelector( '.ext-pagelike__heart-shape' );
+		const heartShape = heartPath.getAttribute( 'd' );
 		let hookCalls = 0;
 		const listener = ( event ) => {
 			hookCalls++;
@@ -53,7 +97,13 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 
 		mounted.ready.then( () => {
 			assert.strictEqual( mounted.elements.count.textContent, '4' );
-			assert.strictEqual( mounted.elements.icon.textContent, '♡', 'unliked state uses an outline heart' );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'svg' ), heart );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'path' ), heartPath );
+			assert.strictEqual( heartPath.getAttribute( 'd' ), heartShape );
+			assert.false( root.classList.contains( 'is-liked' ), 'unliked state outlines the heart' );
+			assert.strictEqual( button.textContent, '4', 'the SVG and count are the only visible content' );
+			assert.strictEqual( button.getAttribute( 'aria-label' ), mw.msg( 'pagelike-button-like' ) );
+			assert.notOk( button.querySelector( '.ext-pagelike__label' ), 'no visible text label is rendered' );
 			assert.false( root.classList.contains( 'is-celebrating' ), 'initial state does not celebrate' );
 			button.focus();
 			button.click();
@@ -70,7 +120,11 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 			assert.strictEqual( document.activeElement, button, 'focus is preserved' );
 			assert.true( root.classList.contains( 'is-liked' ) );
 			assert.strictEqual( button.getAttribute( 'aria-pressed' ), 'true' );
-			assert.strictEqual( mounted.elements.icon.textContent, '♥', 'successful like uses a solid heart' );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'svg' ), heart );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'path' ), heartPath );
+			assert.strictEqual( heartPath.getAttribute( 'd' ), heartShape );
+			assert.strictEqual( button.textContent, '5', 'the updated count remains visible' );
+			assert.strictEqual( button.getAttribute( 'aria-label' ), mw.msg( 'pagelike-button-unlike' ) );
 			assert.true( root.classList.contains( 'is-celebrating' ), 'successful like celebrates once' );
 			assert.strictEqual( hookCalls, 1 );
 			assert.strictEqual( reads, 1, 'write response is authoritative; no follow-up GET' );
@@ -97,7 +151,12 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 		} );
 
 		mounted.ready.then( () => {
-			assert.strictEqual( mounted.elements.icon.textContent, '♥' );
+			assert.strictEqual( mounted.elements.icon.querySelectorAll( 'svg' ).length, 1 );
+			assert.strictEqual( mounted.elements.icon.querySelectorAll( 'path' ).length, 1 );
+			assert.strictEqual(
+				mounted.elements.button.getAttribute( 'aria-label' ),
+				mw.msg( 'pagelike-button-unlike' )
+			);
 			assert.true( root.classList.contains( 'is-liked' ) );
 			assert.false( root.classList.contains( 'is-celebrating' ) );
 			done();
@@ -130,6 +189,7 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 				return Promise.resolve( { pagelike: responses[ writes.length - 1 ] } );
 			}
 		} );
+		const heartPath = mounted.elements.icon.querySelector( 'path' );
 		const clickAndWait = () => new Promise( ( resolve ) => {
 			const changedHook = mw.hook( 'ext.pageLike.changed' );
 			const resolveOnce = () => {
@@ -141,15 +201,17 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 		} );
 
 		mounted.ready.then( clickAndWait ).then( () => {
-			assert.strictEqual( mounted.elements.icon.textContent, '♥' );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'path' ), heartPath );
 			assert.true( root.classList.contains( 'is-celebrating' ) );
 			return clickAndWait();
 		} ).then( () => {
-			assert.strictEqual( mounted.elements.icon.textContent, '♡' );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'path' ), heartPath );
+			assert.false( root.classList.contains( 'is-liked' ) );
 			assert.false( root.classList.contains( 'is-celebrating' ), 'unlike clears celebration state' );
 			return clickAndWait();
 		} ).then( () => {
-			assert.strictEqual( mounted.elements.icon.textContent, '♥' );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'path' ), heartPath );
+			assert.true( root.classList.contains( 'is-liked' ) );
 			assert.true( root.classList.contains( 'is-celebrating' ), 'later like can celebrate again' );
 			assert.deepEqual( writes, [ 1, 0, 1 ], 'each write sends an explicit target state' );
 			done();
@@ -205,7 +267,7 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 		} );
 	} );
 
-	QUnit.test( 'anonymous and temporary accounts see count with login label', ( assert ) => {
+	QUnit.test( 'anonymous and temporary accounts see count with an accessible login label', ( assert ) => {
 		const done = assert.async();
 		mw.user.isNamed = () => false;
 		const root = document.createElement( 'div' );
@@ -222,7 +284,16 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 		} );
 		mounted.ready.then( () => {
 			assert.strictEqual( mounted.elements.count.textContent, '7' );
-			assert.strictEqual( mounted.elements.label.textContent, mw.msg( 'pagelike-button-login' ) );
+			assert.strictEqual( mounted.elements.button.textContent, '7' );
+			assert.strictEqual( mounted.elements.icon.querySelectorAll( 'path' ).length, 1 );
+			assert.strictEqual(
+				mounted.elements.button.getAttribute( 'aria-label' ),
+				mw.msg( 'pagelike-button-login' )
+			);
+			assert.notOk(
+				mounted.elements.button.querySelector( '.ext-pagelike__label' ),
+				'login guidance is not visibly rendered'
+			);
 			assert.true( mounted.elements.button.disabled );
 			done();
 		} );
@@ -271,6 +342,7 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 				return writePromise;
 			}
 		} );
+		const heartPath = mounted.elements.icon.querySelector( 'path' );
 		let hookCalls = 0;
 		const listener = () => {
 			hookCalls++;
@@ -278,7 +350,8 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 		mw.hook( 'ext.pageLike.changed' ).add( listener );
 
 		mounted.ready.then( () => {
-			assert.strictEqual( mounted.elements.icon.textContent, '♡' );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'path' ), heartPath );
+			assert.false( root.classList.contains( 'is-liked' ) );
 			mounted.elements.button.focus();
 			mounted.elements.button.click();
 			rejectWrite( { info: 'Write failed' } );
@@ -287,7 +360,8 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 			assert.true( root.classList.contains( 'is-error' ) );
 			assert.strictEqual( mounted.elements.status.textContent, 'Write failed' );
 			assert.strictEqual( document.activeElement, mounted.elements.button );
-			assert.strictEqual( mounted.elements.icon.textContent, '♡', 'failed write keeps outline heart' );
+			assert.strictEqual( mounted.elements.icon.querySelector( 'path' ), heartPath );
+			assert.false( root.classList.contains( 'is-liked' ), 'failed write keeps outline heart' );
 			assert.false( root.classList.contains( 'is-celebrating' ), 'failed write does not celebrate' );
 			assert.strictEqual( hookCalls, 0 );
 			mw.hook( 'ext.pageLike.changed' ).remove( listener );
@@ -305,5 +379,7 @@ QUnit.module( 'ext.pageLike', ( hooks ) => {
 		assert.notStrictEqual( ui.mount( root, api ), null );
 		assert.strictEqual( ui.mount( root, api ), null );
 		assert.strictEqual( root.querySelectorAll( 'button' ).length, 1 );
+		assert.strictEqual( root.querySelectorAll( '.ext-pagelike__heart' ).length, 1 );
+		assert.strictEqual( root.querySelectorAll( '.ext-pagelike__heart-shape' ).length, 1 );
 	} );
 } );

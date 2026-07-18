@@ -10,12 +10,16 @@
 	"pagelike-button-like": "Label on the button that adds a page like.",
 	"pagelike-button-unlike": "Label on the button that removes the current user's page like.",
 	"pagelike-button-login": "Disabled button label shown to anonymous and temporary accounts.",
-	"pagelike-status-loading": "Status shown while the initial like state is loading.",
 	"pagelike-status-error": "Fallback live-region error shown when a like request fails.",
 	"pagelike-error-disabled": "API error when the PageLike master switch is off.",
 	"pagelike-error-writes-disabled": "API error when PageLike writes are off.",
 	"pagelike-error-ranking-disabled": "API error when PageLike rankings are off.",
 	"pagelike-error-disabled-page": "API error when the page namespace or behavior switch disables likes.",
+	"echo-category-title-page-like": "Title of the Echo notification category for likes on pages created by the user.",
+	"echo-pref-tooltip-page-like": "Tooltip for the preference that controls notifications about likes on pages created by the user.",
+	"notification-header-page-like": "Echo notification header. Parameters: $1 is the liking user's formatted name, $2 is that user's name for gender, $3 is the page title, and $4 is the recipient's name for gender.",
+	"notification-compact-header-page-like": "Compact Echo notification header. Parameters: $1 is the liking user's formatted name, $2 is that user's name for gender, $3 is the page title, and $4 is the recipient's name for gender.",
+	"notification-subject-page-like": "Email subject for a page-like notification. Parameters: $1 is the liking user's formatted name, $2 is that user's name for gender, and $3 is the recipient's name for gender.",
 	"apihelp-pagelike-summary": "{{doc-apihelp-summary|pagelike}}",
 	"apihelp-pagelike-param-pageid": "{{doc-apihelp-param|pagelike|pageid}}",
 	"apihelp-pagelike-param-set": "{{doc-apihelp-param|pagelike|set}}",
@@ -26,4 +30,3 @@
 	"apihelp-query+pagelikerank-param-limit": "{{doc-apihelp-param|query+pagelikerank|limit}}",
 	"apihelp-query+pagelikerank-example-1": "{{doc-apihelp-example|query+pagelikerank}}"
 }
-

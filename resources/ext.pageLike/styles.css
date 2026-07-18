@@ -23,6 +23,7 @@
 	padding: 0.5em 0.9em;
 	color: inherit;
 	font: inherit;
+	font-size: 1.33em;
 	font-weight: 500;
 	background: var( --pagelike-background );
 	border: 1px solid var( --pagelike-border-color );
@@ -68,6 +69,23 @@
 	transition: color 140ms ease, transform 140ms ease;
 }
 
+.ext-pagelike__heart {
+	display: block;
+	width: 1em;
+	height: 1em;
+	overflow: visible;
+}
+
+.ext-pagelike__heart-shape {
+	fill: currentcolor;
+	fill-opacity: 0;
+	stroke: currentcolor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+	transition: fill-opacity 140ms ease;
+}
+
 .ext-pagelike__button:hover:not( :disabled ) .ext-pagelike__icon {
 	color: var( --pagelike-active-color );
 }
@@ -102,8 +120,8 @@
 	border-color: currentcolor;
 }
 
-.ext-pagelike.is-liked .ext-pagelike__icon {
-	transform: scale( 1.08 );
+.ext-pagelike.is-liked .ext-pagelike__heart-shape {
+	fill-opacity: 1;
 }
 
 .ext-pagelike.is-celebrating .ext-pagelike__icon {
@@ -144,7 +162,7 @@
 		transform: scale( 0.96 );
 	}
 	100% {
-		transform: scale( 1.08 );
+		transform: scale( 1 );
 	}
 }
 
@@ -174,6 +192,7 @@
 @media ( prefers-reduced-motion: reduce ) {
 	.ext-pagelike__button,
 	.ext-pagelike__icon,
+	.ext-pagelike__heart-shape,
 	.ext-pagelike__count {
 		transition: none;
 	}

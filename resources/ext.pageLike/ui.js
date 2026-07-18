@@ -1,5 +1,11 @@
 'use strict';
 
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const HEART_PATH = 'M12 21.25c-0.31 0-0.61-0.12-0.84-0.34l-7.11-6.64' +
+	'c-3.03-2.83-3.18-7.42-0.33-10.21 2.31-2.26 5.87-2.16 8.28 0.09 ' +
+	'2.41-2.25 5.97-2.35 8.28-0.09 2.85 2.79 2.7 7.38-0.33 10.21l-7.11 6.64' +
+	'c-0.23 0.22-0.53 0.34-0.84 0.34z';
+
 function appendElement( parent, tagName, className, text ) {
 	const element = document.createElement( tagName );
 	element.className = className;
@@ -14,15 +20,27 @@ function createButton( root ) {
 	const button = appendElement( root, 'button', 'ext-pagelike__button' );
 	button.type = 'button';
 	button.setAttribute( 'aria-pressed', 'false' );
+	button.setAttribute(
+		'aria-label',
+		mw.msg( mw.user.isNamed() ? 'pagelike-button-like' : 'pagelike-button-login' )
+	);
 
-	const icon = appendElement( button, 'span', 'ext-pagelike__icon', '♡' );
+	const icon = appendElement( button, 'span', 'ext-pagelike__icon' );
 	icon.setAttribute( 'aria-hidden', 'true' );
-	const label = appendElement( button, 'span', 'ext-pagelike__label', mw.msg( 'pagelike-button-like' ) );
+	const heart = document.createElementNS( SVG_NAMESPACE, 'svg' );
+	heart.setAttribute( 'class', 'ext-pagelike__heart' );
+	heart.setAttribute( 'viewBox', '0 0 24 24' );
+	heart.setAttribute( 'focusable', 'false' );
+	const heartPath = document.createElementNS( SVG_NAMESPACE, 'path' );
+	heartPath.setAttribute( 'class', 'ext-pagelike__heart-shape' );
+	heartPath.setAttribute( 'd', HEART_PATH );
+	heart.appendChild( heartPath );
+	icon.appendChild( heart );
 	const count = appendElement( button, 'span', 'ext-pagelike__count', '0' );
 	const status = appendElement( root, 'span', 'ext-pagelike__status' );
 	status.setAttribute( 'aria-live', 'polite' );
 
-	return { button, icon, label, count, status };
+	return { button, icon, count, status };
 }
 
 function setPending( root, elements, pending ) {
@@ -39,15 +57,14 @@ function render( root, elements, state ) {
 	root.hidden = !state.enabled;
 	root.classList.toggle( 'is-liked', state.liked );
 	elements.button.setAttribute( 'aria-pressed', state.liked ? 'true' : 'false' );
-	elements.icon.textContent = state.liked ? '♥' : '♡';
 	elements.count.textContent = String( state.count );
 
 	if ( !mw.user.isNamed() ) {
-		elements.label.textContent = mw.msg( 'pagelike-button-login' );
+		elements.button.setAttribute( 'aria-label', mw.msg( 'pagelike-button-login' ) );
 	} else {
-		elements.label.textContent = mw.msg(
+		elements.button.setAttribute( 'aria-label', mw.msg(
 			state.liked ? 'pagelike-button-unlike' : 'pagelike-button-like'
-		);
+		) );
 	}
 	elements.button.disabled = !state.canlike;
 }
@@ -103,7 +120,6 @@ function mount( root, api ) {
 		canlike: false,
 		pending: false
 	};
-	elements.status.textContent = mw.msg( 'pagelike-status-loading' );
 	setPending( root, elements, true );
 
 	const ready = client.get( {

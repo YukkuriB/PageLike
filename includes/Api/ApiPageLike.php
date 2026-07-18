@@ -4,6 +4,7 @@ namespace MediaWiki\Extension\PageLike\Api;
 
 use MediaWiki\Api\ApiBase;
 use MediaWiki\Api\ApiMain;
+use MediaWiki\Extension\PageLike\CreatorNotificationService;
 use MediaWiki\Extension\PageLike\LikeStore;
 use MediaWiki\Extension\PageLike\PageLikePolicy;
 use MediaWiki\Logger\LoggerFactory;
@@ -23,7 +24,8 @@ class ApiPageLike extends ApiBase {
 		string $action,
 		private readonly LikeStore $store,
 		private readonly PageLikePolicy $policy,
-		private readonly PageStore $pageStore
+		private readonly PageStore $pageStore,
+		private readonly CreatorNotificationService $creatorNotifications
 	) {
 		parent::__construct( $main, $action );
 	}
@@ -86,6 +88,9 @@ class ApiPageLike extends ApiBase {
 		}
 		if ( $state === null ) {
 			$this->dieWithError( 'pagelike-error-disabled-page', 'pagelike-disabled-page' );
+		}
+		if ( $state['newlyLiked'] ) {
+			$this->creatorNotifications->schedule( $page, $authority->getUser() );
 		}
 
 		$this->getResult()->addValue( null, 'pagelike', [
