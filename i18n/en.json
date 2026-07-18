@@ -1,0 +1,29 @@
+{
+	"@metadata": {
+		"authors": [
+			"RiaWiki contributors"
+		]
+	},
+	"pagelike-desc": "Adds per-page likes and rolling page rankings",
+	"right-pagelike": "Like and unlike pages",
+	"action-pagelike": "like or unlike this page",
+	"pagelike-button-like": "Like",
+	"pagelike-button-unlike": "Unlike",
+	"pagelike-button-login": "Log in to like",
+	"pagelike-status-loading": "Loading likes…",
+	"pagelike-status-error": "The like state could not be updated.",
+	"pagelike-error-disabled": "PageLike is disabled.",
+	"pagelike-error-writes-disabled": "PageLike writes are disabled.",
+	"pagelike-error-ranking-disabled": "PageLike rankings are disabled.",
+	"pagelike-error-disabled-page": "PageLike is not available on this page.",
+	"apihelp-pagelike-summary": "Set the current named user's like state for a page.",
+	"apihelp-pagelike-param-pageid": "Numeric ID of the target page.",
+	"apihelp-pagelike-param-set": "Explicit state: 1 to like, 0 to unlike.",
+	"apihelp-pagelike-example-1": "Like page 123.",
+	"apihelp-query+pagelikeinfo-summary": "Return PageLike state and count for pages.",
+	"apihelp-query+pagelikerank-summary": "Return a permission-filtered PageLike ranking.",
+	"apihelp-query+pagelikerank-param-period": "Rolling period: 7d, 30d, or all.",
+	"apihelp-query+pagelikerank-param-limit": "Maximum number of results, from 1 to 100.",
+	"apihelp-query+pagelikerank-example-1": "Show the top ten pages from the rolling seven-day period."
+}
+

@@ -1,0 +1,29 @@
+{
+	"@metadata": {
+		"authors": [
+			"RiaWiki contributors"
+		]
+	},
+	"pagelike-desc": "提供逐页点赞和滚动周期页面排行榜",
+	"right-pagelike": "点赞或取消点赞页面",
+	"action-pagelike": "点赞或取消点赞此页面",
+	"pagelike-button-like": "点赞",
+	"pagelike-button-unlike": "取消点赞",
+	"pagelike-button-login": "登录后点赞",
+	"pagelike-status-loading": "正在加载点赞数……",
+	"pagelike-status-error": "无法更新点赞状态。",
+	"pagelike-error-disabled": "PageLike 已关闭。",
+	"pagelike-error-writes-disabled": "PageLike 写入已关闭。",
+	"pagelike-error-ranking-disabled": "PageLike 排行榜已关闭。",
+	"pagelike-error-disabled-page": "此页面不提供点赞功能。",
+	"apihelp-pagelike-summary": "设置当前命名账户对页面的点赞状态。",
+	"apihelp-pagelike-param-pageid": "目标页面的数字 ID。",
+	"apihelp-pagelike-param-set": "明确状态：1 为点赞，0 为取消点赞。",
+	"apihelp-pagelike-example-1": "点赞 ID 为 123 的页面。",
+	"apihelp-query+pagelikeinfo-summary": "返回页面的 PageLike 状态和计数。",
+	"apihelp-query+pagelikerank-summary": "返回经过读取权限过滤的 PageLike 排行榜。",
+	"apihelp-query+pagelikerank-param-period": "滚动周期：7d、30d 或 all。",
+	"apihelp-query+pagelikerank-param-limit": "结果数量上限，范围为 1 到 100。",
+	"apihelp-query+pagelikerank-example-1": "显示滚动七天内排名前十的页面。"
+}
+

@@ -1,0 +1,29 @@
+{
+	"@metadata": {
+		"authors": [
+			"RiaWiki contributors"
+		]
+	},
+	"pagelike-desc": "{{desc|name=PageLike|url=https://www.mediawiki.org/wiki/Extension:PageLike}}",
+	"right-pagelike": "{{doc-right|pagelike}}",
+	"action-pagelike": "{{doc-action|pagelike}}",
+	"pagelike-button-like": "Label on the button that adds a page like.",
+	"pagelike-button-unlike": "Label on the button that removes the current user's page like.",
+	"pagelike-button-login": "Disabled button label shown to anonymous and temporary accounts.",
+	"pagelike-status-loading": "Status shown while the initial like state is loading.",
+	"pagelike-status-error": "Fallback live-region error shown when a like request fails.",
+	"pagelike-error-disabled": "API error when the PageLike master switch is off.",
+	"pagelike-error-writes-disabled": "API error when PageLike writes are off.",
+	"pagelike-error-ranking-disabled": "API error when PageLike rankings are off.",
+	"pagelike-error-disabled-page": "API error when the page namespace or behavior switch disables likes.",
+	"apihelp-pagelike-summary": "{{doc-apihelp-summary|pagelike}}",
+	"apihelp-pagelike-param-pageid": "{{doc-apihelp-param|pagelike|pageid}}",
+	"apihelp-pagelike-param-set": "{{doc-apihelp-param|pagelike|set}}",
+	"apihelp-pagelike-example-1": "{{doc-apihelp-example|pagelike}}",
+	"apihelp-query+pagelikeinfo-summary": "{{doc-apihelp-summary|query+pagelikeinfo}}",
+	"apihelp-query+pagelikerank-summary": "{{doc-apihelp-summary|query+pagelikerank}}",
+	"apihelp-query+pagelikerank-param-period": "{{doc-apihelp-param|query+pagelikerank|period}}",
+	"apihelp-query+pagelikerank-param-limit": "{{doc-apihelp-param|query+pagelikerank|limit}}",
+	"apihelp-query+pagelikerank-example-1": "{{doc-apihelp-example|query+pagelikerank}}"
+}
+

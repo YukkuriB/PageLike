@@ -1,0 +1,153 @@
+{
+	"name": "PageLike",
+	"version": "0.1.3",
+	"author": [
+		"RiaWiki contributors"
+	],
+	"url": "https://www.mediawiki.org/wiki/Extension:PageLike",
+	"descriptionmsg": "pagelike-desc",
+	"license-name": "GPL-2.0-or-later",
+	"type": "other",
+	"requires": {
+		"MediaWiki": ">=1.45.1 <1.46.0",
+		"platform": {
+			"php": ">=8.2.0 <8.4.0"
+		}
+	},
+	"AutoloadNamespaces": {
+		"MediaWiki\\Extension\\PageLike\\": "includes/"
+	},
+	"TestAutoloadNamespaces": {
+		"MediaWiki\\Extension\\PageLike\\Tests\\": "tests/phpunit/"
+	},
+	"MessagesDirs": {
+		"PageLike": [
+			"i18n"
+		]
+	},
+	"ExtensionMessagesFiles": {
+		"PageLikeMagic": "PageLike.i18n.magic.php"
+	},
+	"ServiceWiringFiles": [
+		"includes/ServiceWiring.php"
+	],
+	"Hooks": {
+		"LoadExtensionSchemaUpdates": "schema",
+		"GetDoubleUnderscoreIDs": "runtime",
+		"OutputPageParserOutput": "runtime",
+		"SkinAfterContent": "runtime",
+		"PageDeleteComplete": "runtime"
+	},
+	"HookHandlers": {
+		"schema": {
+			"class": "MediaWiki\\Extension\\PageLike\\SchemaHooks"
+		},
+		"runtime": {
+			"class": "MediaWiki\\Extension\\PageLike\\Hooks",
+			"services": [
+				"PageLike.Policy",
+				"PageLike.LikeStore"
+			]
+		}
+	},
+	"APIModules": {
+		"pagelike": {
+			"class": "MediaWiki\\Extension\\PageLike\\Api\\ApiPageLike",
+			"services": [
+				"PageLike.LikeStore",
+				"PageLike.Policy",
+				"PageStore"
+			]
+		}
+	},
+	"APIPropModules": {
+		"pagelikeinfo": {
+			"class": "MediaWiki\\Extension\\PageLike\\Api\\ApiQueryPageLikeInfo",
+			"services": [
+				"PageLike.LikeStore",
+				"PageLike.Policy"
+			]
+		}
+	},
+	"APIListModules": {
+		"pagelikerank": {
+			"class": "MediaWiki\\Extension\\PageLike\\Api\\ApiQueryPageLikeRank",
+			"services": [
+				"PageLike.RankingService",
+				"PageLike.Policy"
+			]
+		}
+	},
+	"AvailableRights": [
+		"pagelike"
+	],
+	"GroupPermissions": {
+		"user": {
+			"pagelike": true
+		}
+	},
+	"RateLimits": {
+		"pagelike": {
+			"user": [
+				30,
+				60
+			]
+		}
+	},
+	"config": {
+		"PageLikeEnabled": {
+			"value": true
+		},
+		"PageLikeEnableWrites": {
+			"value": true
+		},
+		"PageLikeEnableRanking": {
+			"value": false
+		},
+		"PageLikeShowDefaultButton": {
+			"value": true
+		},
+		"PageLikeAllowedNamespaces": {
+			"value": [
+				0
+			]
+		}
+	},
+	"ResourceModules": {
+		"ext.pageLike": {
+			"packageFiles": [
+				"resources/ext.pageLike/index.js",
+				"resources/ext.pageLike/ui.js"
+			],
+			"styles": [
+				"resources/ext.pageLike/styles.css"
+			],
+			"dependencies": [
+				"mediawiki.api",
+				"mediawiki.user"
+			],
+			"messages": [
+				"pagelike-button-like",
+				"pagelike-button-unlike",
+				"pagelike-button-login",
+				"pagelike-status-loading",
+				"pagelike-status-error"
+			]
+		}
+	},
+	"ResourceFileModulePaths": {
+		"localBasePath": ".",
+		"remoteExtPath": "PageLike"
+	},
+	"QUnitTestModule": {
+		"localBasePath": "tests/qunit",
+		"remoteExtPath": "PageLike/tests/qunit",
+		"scripts": [
+			"ext.pageLike.test.js"
+		],
+		"dependencies": [
+			"ext.pageLike"
+		]
+	},
+	"manifest_version": 2
+}

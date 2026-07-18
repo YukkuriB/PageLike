@@ -1,0 +1,53 @@
+[
+	{
+		"name": "pagelike_like",
+		"comment": "Current PageLike state for named users and pages",
+		"columns": [
+			{
+				"name": "pll_page_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "pll_user_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "pll_liked_at",
+				"type": "mwtimestamp",
+				"options": {
+					"notnull": true
+				}
+			}
+		],
+		"indexes": [
+			{
+				"name": "pagelike_like_liked_at_page",
+				"unique": false,
+				"columns": [
+					"pll_liked_at",
+					"pll_page_id"
+				]
+			},
+			{
+				"name": "pagelike_like_user_page",
+				"unique": false,
+				"columns": [
+					"pll_user_id",
+					"pll_page_id"
+				]
+			}
+		],
+		"pk": [
+			"pll_page_id",
+			"pll_user_id"
+		]
+	}
+]

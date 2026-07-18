@@ -1,0 +1,186 @@
+.ext-pagelike {
+	--pagelike-color: var( --color-subtle, #54595d );
+	--pagelike-active-color: #ef233c;
+	--pagelike-background: rgba( 239, 35, 60, 0.06 );
+	--pagelike-hover-background: rgba( 239, 35, 60, 0.12 );
+	--pagelike-border-color: rgba( 239, 35, 60, 0.24 );
+	--pagelike-burst-color: #ff8fa3;
+	--pagelike-radius: 999px;
+
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: center;
+	margin-block: 1.5rem;
+	color: var( --pagelike-color );
+}
+
+.ext-pagelike__button {
+	position: relative;
+	display: inline-flex;
+	gap: 0.45em;
+	align-items: center;
+	min-height: 2.5em;
+	padding: 0.5em 0.9em;
+	color: inherit;
+	font: inherit;
+	font-weight: 500;
+	background: var( --pagelike-background );
+	border: 1px solid var( --pagelike-border-color );
+	border-radius: var( --pagelike-radius );
+	box-shadow: 0 1px 2px rgba( 0, 0, 0, 0.06 );
+	cursor: pointer;
+	isolation: isolate;
+	transition: background-color 140ms ease, border-color 140ms ease,
+		box-shadow 140ms ease, color 140ms ease, transform 80ms ease-out;
+}
+
+.ext-pagelike__button:hover:not( :disabled ) {
+	background: var( --pagelike-hover-background );
+	border-color: currentcolor;
+	box-shadow: 0 3px 8px rgba( 239, 35, 60, 0.12 );
+	transform: translateY( -1px ) scale( 1.01 );
+}
+
+.ext-pagelike__button:active:not( :disabled ) {
+	box-shadow: none;
+	transform: scale( 0.94 );
+}
+
+.ext-pagelike__button:disabled {
+	cursor: default;
+	opacity: 0.82;
+}
+
+.ext-pagelike__button:focus-visible {
+	outline: 2px solid currentcolor;
+	outline-offset: 2px;
+}
+
+.ext-pagelike__icon {
+	position: relative;
+	display: inline-grid;
+	place-items: center;
+	width: 1.1em;
+	height: 1.1em;
+	color: inherit;
+	font-size: 1.15em;
+	line-height: 1;
+	transition: color 140ms ease, transform 140ms ease;
+}
+
+.ext-pagelike__button:hover:not( :disabled ) .ext-pagelike__icon {
+	color: var( --pagelike-active-color );
+}
+
+.ext-pagelike__icon::before {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	pointer-events: none;
+	content: '';
+	opacity: 0;
+	width: 1.25em;
+	height: 1.25em;
+	border: 0.12em solid var( --pagelike-burst-color );
+	border-radius: 50%;
+	transform: translate( -50%, -50% ) scale( 0.25 );
+}
+
+.ext-pagelike__count {
+	min-width: 1.35em;
+	font-variant-numeric: tabular-nums;
+	text-align: center;
+	transform-origin: center;
+}
+
+.ext-pagelike.is-liked {
+	color: var( --pagelike-active-color );
+}
+
+.ext-pagelike.is-liked .ext-pagelike__button {
+	background: rgba( 239, 35, 60, 0.12 );
+	border-color: currentcolor;
+}
+
+.ext-pagelike.is-liked .ext-pagelike__icon {
+	transform: scale( 1.08 );
+}
+
+.ext-pagelike.is-celebrating .ext-pagelike__icon {
+	animation: pagelike-heart-pop 400ms ease-out;
+}
+
+.ext-pagelike.is-celebrating .ext-pagelike__icon::before {
+	animation: pagelike-ring-burst 320ms ease-out;
+}
+
+.ext-pagelike.is-celebrating .ext-pagelike__count {
+	animation: pagelike-count-pop 240ms ease-out 40ms;
+}
+
+.ext-pagelike.is-pending .ext-pagelike__button {
+	cursor: progress;
+}
+
+.ext-pagelike.is-error .ext-pagelike__status {
+	color: #b32424;
+}
+
+.ext-pagelike__status {
+	flex-basis: 100%;
+	margin-block-start: 0.4em;
+	font-size: 0.875em;
+	text-align: center;
+}
+
+@keyframes pagelike-heart-pop {
+	0% {
+		transform: scale( 0.78 );
+	}
+	45% {
+		transform: scale( 1.38 );
+	}
+	72% {
+		transform: scale( 0.96 );
+	}
+	100% {
+		transform: scale( 1.08 );
+	}
+}
+
+@keyframes pagelike-ring-burst {
+	0% {
+		opacity: 0.8;
+		transform: translate( -50%, -50% ) scale( 0.25 );
+	}
+	100% {
+		opacity: 0;
+		transform: translate( -50%, -50% ) scale( 1.6 );
+	}
+}
+
+@keyframes pagelike-count-pop {
+	0% {
+		transform: scale( 0.88 );
+	}
+	55% {
+		transform: scale( 1.16 );
+	}
+	100% {
+		transform: scale( 1 );
+	}
+}
+
+@media ( prefers-reduced-motion: reduce ) {
+	.ext-pagelike__button,
+	.ext-pagelike__icon,
+	.ext-pagelike__count {
+		transition: none;
+	}
+
+	.ext-pagelike.is-celebrating .ext-pagelike__icon,
+	.ext-pagelike.is-celebrating .ext-pagelike__icon::before,
+	.ext-pagelike.is-celebrating .ext-pagelike__count {
+		animation: none;
+	}
+}
