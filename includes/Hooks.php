@@ -22,7 +22,8 @@ class Hooks implements
 {
 	public function __construct(
 		private readonly PageLikePolicy $policy,
-		private readonly LikeStore $store
+		private readonly LikeStore $store,
+		private readonly NotificationDeduplicationStore $notificationDedupeStore
 	) {
 	}
 
@@ -74,6 +75,19 @@ class Hooks implements
 				[
 					'pageId' => $pageID,
 					'errorCode' => 'pagelike-page-delete-cleanup-failed',
+					'exceptionClass' => $exception::class,
+				]
+			);
+		}
+		try {
+			$this->notificationDedupeStore->deleteForPageIfTableExists( $pageID );
+		} catch ( Throwable $exception ) {
+			// A cleanup failure must never prevent a core page deletion.
+			LoggerFactory::getInstance( 'PageLike' )->error(
+				'PageLike notification deduplication cleanup failed',
+				[
+					'pageId' => $pageID,
+					'errorCode' => 'pagelike-notification-dedupe-page-delete-cleanup-failed',
 					'exceptionClass' => $exception::class,
 				]
 			);

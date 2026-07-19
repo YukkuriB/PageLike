@@ -14,5 +14,9 @@ class SchemaHooks implements LoadExtensionSchemaUpdatesHook {
 			'pagelike_like',
 			__DIR__ . '/../sql/mysql/tables-generated.sql'
 		);
+		$updater->addExtensionTable(
+			'pagelike_notification_dedupe',
+			__DIR__ . '/../sql/mysql/patch-add-pagelike-notification-dedupe.sql'
+		);
 	}
 }

@@ -3,6 +3,8 @@
 ## Unreleased
 
 - Reduce the per-user like write rate limit from 30 to 10 requests per 60 seconds.
+- Notify a page creator at most once for each liking user and page pair, even after unlike/re-like cycles.
+- Persist notification deduplication claims independently from current likes and clean them up with page, user, and orphan maintenance flows.
 
 ## 0.2.2
 

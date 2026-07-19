@@ -23,6 +23,7 @@ final class CreatorNotificationService {
 		private readonly ?NotificationService $notifications,
 		private readonly RevisionLookup $revisionLookup,
 		private readonly UserFactory $userFactory,
+		private readonly NotificationDeduplicationStore $notificationDedupeStore,
 		private readonly IConnectionProvider $connectionProvider
 	) {
 	}
@@ -67,6 +68,9 @@ final class CreatorNotificationService {
 
 			$creator = $this->userFactory->newFromUserIdentity( $creatorIdentity );
 			if ( !$creator->isNamed() || !$creator->definitelyCan( 'read', $page ) ) {
+				return;
+			}
+			if ( !$this->notificationDedupeStore->claim( $page->getId(), $agent->getId() ) ) {
 				return;
 			}
 

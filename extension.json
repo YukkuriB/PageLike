@@ -50,7 +50,8 @@
 			"class": "MediaWiki\\Extension\\PageLike\\Hooks",
 			"services": [
 				"PageLike.Policy",
-				"PageLike.LikeStore"
+				"PageLike.LikeStore",
+				"PageLike.NotificationDeduplicationStore"
 			]
 		}
 	},

@@ -49,5 +49,41 @@
 			"pll_page_id",
 			"pll_user_id"
 		]
+	},
+	{
+		"name": "pagelike_notification_dedupe",
+		"comment": "At-most-once creator-notification claims for page and liking user pairs",
+		"columns": [
+			{
+				"name": "plnd_page_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			},
+			{
+				"name": "plnd_user_id",
+				"type": "integer",
+				"options": {
+					"unsigned": true,
+					"notnull": true
+				}
+			}
+		],
+		"indexes": [
+			{
+				"name": "pagelike_notification_dedupe_user_page",
+				"unique": false,
+				"columns": [
+					"plnd_user_id",
+					"plnd_page_id"
+				]
+			}
+		],
+		"pk": [
+			"plnd_page_id",
+			"plnd_user_id"
+		]
 	}
 ]

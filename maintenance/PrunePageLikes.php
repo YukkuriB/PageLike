@@ -10,7 +10,9 @@ require_once __DIR__ . '/../../../maintenance/Maintenance.php';
 class PrunePageLikes extends Maintenance {
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( 'Delete PageLike rows for missing pages or users.' );
+		$this->addDescription(
+			'Delete PageLike state and notification deduplication rows for missing pages or users.'
+		);
 		$this->addOption( 'dry-run', 'Count rows without deleting them.' );
 		$this->addOption( 'batch-size', 'Maximum rows deleted per batch.', false, true );
 	}
@@ -26,18 +28,44 @@ class PrunePageLikes extends Maintenance {
 		$batchSize = (int)$rawBatchSize;
 
 		try {
-			$store = $this->getServiceContainer()->get( 'PageLike.LikeStore' );
+			$likeStore = $this->getServiceContainer()->get( 'PageLike.LikeStore' );
+			$notificationStore = $this->getServiceContainer()->get(
+				'PageLike.NotificationDeduplicationStore'
+			);
 			if ( $this->hasOption( 'dry-run' ) ) {
-				$this->output( 'Would delete ' . $store->countOrphans() . " orphan PageLike rows.\n" );
+				$this->output(
+					'Would delete ' . $likeStore->countOrphans() . ' orphan like rows and ' .
+					$notificationStore->countOrphans() .
+					" orphan notification deduplication rows.\n"
+				);
 				return;
 			}
 
-			$total = 0;
+			$likeTotal = 0;
 			do {
-				$deleted = $store->pruneOrphansBatch( $batchSize );
-				$total += $deleted;
-				$this->output( "Deleted $total orphan PageLike rows.\n" );
+				$deleted = $likeStore->pruneOrphansBatch( $batchSize );
+				$likeTotal += $deleted;
+				if ( $deleted > 0 ) {
+					$this->output( "Deleted $likeTotal orphan like rows.\n" );
+				}
 			} while ( $deleted > 0 );
+			if ( $likeTotal === 0 ) {
+				$this->output( "Deleted 0 orphan like rows.\n" );
+			}
+
+			$notificationTotal = 0;
+			do {
+				$deleted = $notificationStore->pruneOrphansBatch( $batchSize );
+				$notificationTotal += $deleted;
+				if ( $deleted > 0 ) {
+					$this->output(
+						"Deleted $notificationTotal orphan notification deduplication rows.\n"
+					);
+				}
+			} while ( $deleted > 0 );
+			if ( $notificationTotal === 0 ) {
+				$this->output( "Deleted 0 orphan notification deduplication rows.\n" );
+			}
 		} catch ( Throwable $exception ) {
 			$this->fatalError( 'PageLike prune failed: ' . $exception->getMessage() );
 		}

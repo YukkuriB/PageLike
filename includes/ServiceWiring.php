@@ -2,6 +2,7 @@
 
 use MediaWiki\Extension\PageLike\CreatorNotificationService;
 use MediaWiki\Extension\PageLike\LikeStore;
+use MediaWiki\Extension\PageLike\NotificationDeduplicationStore;
 use MediaWiki\Extension\PageLike\PageLikePolicy;
 use MediaWiki\Extension\PageLike\RankingService;
 use MediaWiki\MediaWikiServices;
@@ -21,6 +22,11 @@ return [
 			$services->get( 'PageLike.Policy' )
 		);
 	},
+	'PageLike.NotificationDeduplicationStore' => static function (
+		MediaWikiServices $services
+	): NotificationDeduplicationStore {
+		return new NotificationDeduplicationStore( $services->getConnectionProvider() );
+	},
 	'PageLike.CreatorNotificationService' => static function (
 		MediaWikiServices $services
 	): CreatorNotificationService {
@@ -31,6 +37,7 @@ return [
 			$notifications,
 			$services->getRevisionLookup(),
 			$services->getUserFactory(),
+			$services->get( 'PageLike.NotificationDeduplicationStore' ),
 			$services->getConnectionProvider()
 		);
 	},

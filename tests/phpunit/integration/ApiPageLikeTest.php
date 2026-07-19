@@ -126,12 +126,23 @@ class ApiPageLikeTest extends ApiTestCase {
 		], null, $liker );
 		$this->assertSame( 1, $this->countPageLikeEvents( $page->getId() ) );
 
-		// A later false-to-true transition is a new like and does notify again.
+		// A later false-to-true transition is a new like, but the same user/page
+		// pair has already consumed its lifetime creator notification.
 		$this->doApiRequestWithToken( [
 			'action' => 'pagelike',
 			'pageid' => $page->getId(),
 			'set' => 1,
 		], null, $liker );
+		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
+		$this->assertSame( 1, $this->countPageLikeEvents( $page->getId() ) );
+
+		// Another user/page pair gets its own first notification.
+		$otherLiker = $this->getTestUser( [ 'pagelike-notification-other-liker' ] )->getUser();
+		$this->doApiRequestWithToken( [
+			'action' => 'pagelike',
+			'pageid' => $page->getId(),
+			'set' => 1,
+		], null, $otherLiker );
 		DeferredUpdates::doUpdates( DeferredUpdates::POSTSEND );
 		$this->assertSame( 2, $this->countPageLikeEvents( $page->getId() ) );
 	}

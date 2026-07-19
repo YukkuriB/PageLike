@@ -10,7 +10,9 @@ require_once __DIR__ . '/../../../maintenance/Maintenance.php';
 class DeleteUserLikes extends Maintenance {
 	public function __construct() {
 		parent::__construct();
-		$this->addDescription( 'Delete all PageLike rows for one numeric user ID.' );
+		$this->addDescription(
+			'Delete all PageLike state and notification deduplication rows for one numeric user ID.'
+		);
 		$this->addOption( 'user-id', 'Numeric local user ID.', true, true );
 		$this->addOption( 'dry-run', 'Count rows without deleting them.' );
 		$this->addOption( 'batch-size', 'Maximum rows deleted per batch.', false, true );
@@ -32,19 +34,48 @@ class DeleteUserLikes extends Maintenance {
 		$batchSize = (int)$rawBatchSize;
 
 		try {
-			$store = $this->getServiceContainer()->get( 'PageLike.LikeStore' );
+			$likeStore = $this->getServiceContainer()->get( 'PageLike.LikeStore' );
+			$notificationStore = $this->getServiceContainer()->get(
+				'PageLike.NotificationDeduplicationStore'
+			);
 			if ( $this->hasOption( 'dry-run' ) ) {
-				$count = $store->countForUser( $userId );
-				$this->output( "Would delete $count PageLike rows for user $userId.\n" );
+				$likeCount = $likeStore->countForUser( $userId );
+				$notificationCount = $notificationStore->countForUser( $userId );
+				$this->output(
+					"Would delete $likeCount like rows and $notificationCount " .
+					"notification deduplication rows for user $userId.\n"
+				);
 				return;
 			}
 
-			$total = 0;
+			$likeTotal = 0;
 			do {
-				$deleted = $store->deleteForUserBatch( $userId, $batchSize );
-				$total += $deleted;
-				$this->output( "Deleted $total PageLike rows for user $userId.\n" );
+				$deleted = $likeStore->deleteForUserBatch( $userId, $batchSize );
+				$likeTotal += $deleted;
+				if ( $deleted > 0 ) {
+					$this->output( "Deleted $likeTotal like rows for user $userId.\n" );
+				}
 			} while ( $deleted > 0 );
+			if ( $likeTotal === 0 ) {
+				$this->output( "Deleted 0 like rows for user $userId.\n" );
+			}
+
+			$notificationTotal = 0;
+			do {
+				$deleted = $notificationStore->deleteForUserBatch( $userId, $batchSize );
+				$notificationTotal += $deleted;
+				if ( $deleted > 0 ) {
+					$this->output(
+						"Deleted $notificationTotal notification deduplication rows " .
+						"for user $userId.\n"
+					);
+				}
+			} while ( $deleted > 0 );
+			if ( $notificationTotal === 0 ) {
+				$this->output(
+					"Deleted 0 notification deduplication rows for user $userId.\n"
+				);
+			}
 		} catch ( Throwable $exception ) {
 			$this->fatalError( 'PageLike user deletion failed: ' . $exception->getMessage() );
 		}

@@ -3,6 +3,7 @@
 namespace MediaWiki\Extension\PageLike\Tests\Unit;
 
 use MediaWiki\Extension\PageLike\CreatorNotificationService;
+use MediaWiki\Extension\PageLike\NotificationDeduplicationStore;
 use MediaWiki\Page\PageIdentity;
 use MediaWiki\Revision\RevisionLookup;
 use MediaWiki\User\UserFactory;
@@ -21,6 +22,7 @@ class CreatorNotificationServiceTest extends MediaWikiUnitTestCase {
 			null,
 			$this->createMock( RevisionLookup::class ),
 			$this->createMock( UserFactory::class ),
+			$this->createMock( NotificationDeduplicationStore::class ),
 			$connectionProvider
 		);
 
