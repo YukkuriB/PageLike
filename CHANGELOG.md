@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.3
 
 - Reduce the per-user like write rate limit from 30 to 10 requests per 60 seconds.
 - Notify a page creator at most once for each liking user and page pair, even after unlike/re-like cycles.
